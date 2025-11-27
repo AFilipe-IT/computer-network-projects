@@ -1,0 +1,2 @@
+# Packet Sniffer dependencies
+scapy>=2.5.0
