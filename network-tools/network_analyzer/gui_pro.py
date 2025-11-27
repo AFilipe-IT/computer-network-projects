@@ -46,17 +46,19 @@ from .modules import (
 # =============================================================================
 
 COLORS = {
-    "bg": "#1e1e1e",
-    "bg_light": "#252526",
-    "bg_lighter": "#2d2d30",
-    "fg": "#d4d4d4",
-    "fg_dim": "#808080",
-    "accent": "#007acc",
-    "accent_hover": "#1c97ea",
-    "success": "#4ec9b0",
-    "warning": "#dcdcaa",
-    "error": "#f14c4c",
-    "border": "#3c3c3c",
+    "bg": "#1a1a2e",           # Azul escuro profundo
+    "bg_light": "#16213e",      # Azul escuro médio
+    "bg_lighter": "#0f3460",    # Azul médio
+    "fg": "#ffffff",            # Branco puro
+    "fg_dim": "#a0a0a0",        # Cinza claro
+    "accent": "#e94560",        # Rosa/vermelho vibrante
+    "accent_hover": "#ff6b6b",  # Rosa claro
+    "success": "#00ff88",       # Verde neon
+    "warning": "#ffd93d",       # Amarelo vibrante
+    "error": "#ff4757",         # Vermelho vibrante
+    "border": "#4a5568",        # Cinza azulado
+    "text_bg": "#0d1b2a",       # Fundo do texto
+    "highlight": "#00d9ff",     # Ciano vibrante
 }
 
 FONTS = {
@@ -99,10 +101,15 @@ class ModuleFrame(ttk.Frame):
             self.result_frame,
             wrap=tk.WORD,
             font=FONTS["mono"],
-            bg=COLORS["bg_lighter"],
-            fg=COLORS["fg"],
-            insertbackground=COLORS["fg"],
+            bg=COLORS["text_bg"],
+            fg=COLORS["success"],
+            insertbackground=COLORS["highlight"],
             selectbackground=COLORS["accent"],
+            selectforeground=COLORS["fg"],
+            relief=tk.FLAT,
+            borderwidth=0,
+            padx=10,
+            pady=10,
             height=15
         )
         self.output.pack(fill=tk.BOTH, expand=True)
@@ -150,36 +157,148 @@ class ModuleFrame(ttk.Frame):
 
 
 # =============================================================================
-# FRAME - PING
+# FRAME - PING (com gráficos)
 # =============================================================================
 
-class PingFrame(ModuleFrame):
-    """Frame para teste de Ping."""
+class PingFrame(ttk.Frame):
+    """Frame para teste de Ping com gráfico em tempo real."""
     
     def __init__(self, parent):
-        super().__init__(parent, "Ping")
+        super().__init__(parent)
+        self.result_queue = queue.Queue()
+        self.is_running = False
+        self.ping_times = []
         self._setup_ping_ui()
+        self._start_queue_checker()
     
     def _setup_ping_ui(self):
-        """Configura UI específica do ping."""
-        # Host
-        ttk.Label(self.input_frame, text="Host:").pack(side=tk.LEFT)
+        """Configura UI com gráfico."""
+        # Frame de controlo
+        control_frame = ttk.Frame(self)
+        control_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        ttk.Label(control_frame, text="Host:").pack(side=tk.LEFT)
         self.host_var = tk.StringVar(value="google.com")
-        self.host_entry = ttk.Entry(self.input_frame, textvariable=self.host_var, width=30)
+        self.host_entry = ttk.Entry(control_frame, textvariable=self.host_var, width=25)
         self.host_entry.pack(side=tk.LEFT, padx=5)
         
-        # Count
-        ttk.Label(self.input_frame, text="Count:").pack(side=tk.LEFT, padx=(10, 0))
-        self.count_var = tk.StringVar(value="10")
-        self.count_entry = ttk.Entry(self.input_frame, textvariable=self.count_var, width=5)
+        ttk.Label(control_frame, text="Count:").pack(side=tk.LEFT, padx=(10, 0))
+        self.count_var = tk.StringVar(value="15")
+        self.count_entry = ttk.Entry(control_frame, textvariable=self.count_var, width=5)
         self.count_entry.pack(side=tk.LEFT, padx=5)
         
-        # Botão
-        self.run_btn = ttk.Button(self.input_frame, text="▶ Ping", command=self._run_ping)
+        self.run_btn = ttk.Button(control_frame, text="▶ Ping", command=self._run_ping)
         self.run_btn.pack(side=tk.LEFT, padx=10)
+        
+        # Frame principal com 2 colunas
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        # Gráfico (esquerda)
+        if HAS_MATPLOTLIB:
+            graph_frame = ttk.Frame(main_frame)
+            graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            
+            self.fig = Figure(figsize=(5, 4), dpi=100, facecolor=COLORS["bg"])
+            self.ax = self.fig.add_subplot(111)
+            self._setup_graph()
+            
+            self.canvas = FigureCanvasTkAgg(self.fig, master=graph_frame)
+            self.canvas.draw()
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        # Resultados (direita)
+        result_frame = ttk.Frame(main_frame)
+        result_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        
+        self.output = scrolledtext.ScrolledText(
+            result_frame,
+            wrap=tk.WORD,
+            font=FONTS["mono"],
+            bg=COLORS["text_bg"],
+            fg=COLORS["success"],
+            insertbackground=COLORS["highlight"],
+            selectbackground=COLORS["accent"],
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            height=15,
+            width=35
+        )
+        self.output.pack(fill=tk.BOTH, expand=True)
+    
+    def _setup_graph(self):
+        """Configura gráfico."""
+        self.ax.set_facecolor(COLORS["bg"])
+        self.ax.tick_params(colors=COLORS["fg"])
+        for spine in self.ax.spines.values():
+            spine.set_color(COLORS["border"])
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
+        self.ax.set_xlabel("Packet #", color=COLORS["fg_dim"])
+        self.ax.set_ylabel("Time (ms)", color=COLORS["fg_dim"])
+        self.ax.set_title("Ping Response Time", color=COLORS["highlight"], fontsize=12, fontweight='bold')
+    
+    def _update_graph(self):
+        """Atualiza gráfico com novos dados."""
+        if not HAS_MATPLOTLIB or not self.ping_times:
+            return
+            
+        self.ax.clear()
+        self._setup_graph()
+        
+        x = list(range(1, len(self.ping_times) + 1))
+        y = self.ping_times
+        
+        # Linha de ping
+        self.ax.plot(x, y, color=COLORS["success"], linewidth=2, marker='o', markersize=4)
+        
+        # Linha média
+        if y:
+            avg = sum(y) / len(y)
+            self.ax.axhline(y=avg, color=COLORS["warning"], linestyle='--', linewidth=1, alpha=0.7, label=f'Avg: {avg:.1f}ms')
+            self.ax.legend(loc='upper right', facecolor=COLORS["bg"], edgecolor=COLORS["border"], labelcolor=COLORS["fg"])
+        
+        # Preencher área
+        self.ax.fill_between(x, y, alpha=0.3, color=COLORS["success"])
+        
+        self.fig.tight_layout()
+        self.canvas.draw()
+    
+    def _start_queue_checker(self):
+        self._check_queue()
+    
+    def _check_queue(self):
+        try:
+            while True:
+                msg = self.result_queue.get_nowait()
+                if msg["type"] == "output":
+                    self.output.insert(tk.END, msg["text"] + "\n")
+                    self.output.see(tk.END)
+                elif msg["type"] == "ping_data":
+                    self.ping_times.append(msg["time"])
+                    self._update_graph()
+                elif msg["type"] == "done":
+                    self.is_running = False
+        except:
+            pass
+        self.after(100, self._check_queue)
+    
+    def clear_output(self):
+        self.output.delete("1.0", tk.END)
+    
+    def append_output(self, text: str):
+        self.output.insert(tk.END, text + "\n")
+        self.output.see(tk.END)
+    
+    def run_async(self, func, *args):
+        if self.is_running:
+            return
+        self.is_running = True
+        thread = threading.Thread(target=func, args=args, daemon=True)
+        thread.start()
     
     def _run_ping(self):
-        """Executa ping."""
         host = self.host_var.get().strip()
         if not host:
             return
@@ -187,33 +306,37 @@ class PingFrame(ModuleFrame):
         try:
             count = int(self.count_var.get())
         except ValueError:
-            count = 10
+            count = 15
         
+        self.ping_times = []  # Reset
         self.clear_output()
         self.append_output(f"🔍 Ping para {host} ({count} pacotes)...\n")
         
         self.run_async(self._do_ping, host, count)
     
     def _do_ping(self, host: str, count: int):
-        """Realiza ping em thread."""
         try:
-            # Callback para cada ping
             def on_ping(result):
                 if result.success:
-                    msg = f"  [{result.seq}] {result.time_ms:.1f} ms (TTL={result.ttl})"
+                    msg = f"  [{result.seq:2d}] {result.time_ms:6.1f} ms (TTL={result.ttl})"
+                    self.result_queue.put({"type": "ping_data", "time": result.time_ms})
                 else:
-                    msg = f"  [{result.seq}] Timeout"
+                    msg = f"  [{result.seq:2d}] ⏱️ Timeout"
                 self.result_queue.put({"type": "output", "text": msg})
             
-            # Executar ping com callback
             stats = ping.ping(host, count=count, callback=on_ping)
             
-            # Estatísticas
-            self.result_queue.put({"type": "output", "text": f"\n📊 Estatísticas:"})
-            self.result_queue.put({"type": "output", "text": f"   Enviados: {stats.packets_sent}, Recebidos: {stats.packets_received}"})
-            self.result_queue.put({"type": "output", "text": f"   Perda: {stats.packet_loss_pct:.1f}%"})
-            self.result_queue.put({"type": "output", "text": f"   Min/Avg/Max: {stats.min_ms:.1f}/{stats.avg_ms:.1f}/{stats.max_ms:.1f} ms"})
-            self.result_queue.put({"type": "output", "text": f"   Jitter: {stats.jitter_ms:.2f} ms"})
+            self.result_queue.put({"type": "output", "text": "\n" + "━" * 35})
+            self.result_queue.put({"type": "output", "text": "   📊 ESTATÍSTICAS"})
+            self.result_queue.put({"type": "output", "text": "━" * 35})
+            self.result_queue.put({"type": "output", "text": f"   📨 Enviados:  {stats.packets_sent}"})
+            self.result_queue.put({"type": "output", "text": f"   📬 Recebidos: {stats.packets_received}"})
+            self.result_queue.put({"type": "output", "text": f"   📉 Perda:     {stats.packet_loss_pct:.1f}%"})
+            self.result_queue.put({"type": "output", "text": ""})
+            self.result_queue.put({"type": "output", "text": f"   ⏱️ Min: {stats.min_ms:.1f} ms"})
+            self.result_queue.put({"type": "output", "text": f"   ⏱️ Avg: {stats.avg_ms:.1f} ms"})
+            self.result_queue.put({"type": "output", "text": f"   ⏱️ Max: {stats.max_ms:.1f} ms"})
+            self.result_queue.put({"type": "output", "text": f"   📊 Jitter: {stats.jitter_ms:.2f} ms"})
             
         except Exception as e:
             self.result_queue.put({"type": "output", "text": f"❌ Erro: {e}"})
@@ -361,9 +484,9 @@ class PortScannerFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "Port Scanner")
-        self._setup_ui()
+        self._setup_port_ui()
     
-    def _setup_ui(self):
+    def _setup_port_ui(self):
         """Configura UI."""
         ttk.Label(self.input_frame, text="Host:").pack(side=tk.LEFT)
         self.host_var = tk.StringVar(value="127.0.0.1")
@@ -393,30 +516,20 @@ class PortScannerFrame(ModuleFrame):
     def _do_scan(self, host: str, ports_str: str):
         """Realiza scan em thread."""
         try:
-            # Parse ports
-            if "-" in ports_str:
-                start, end = map(int, ports_str.split("-"))
-                ports = range(start, end + 1)
-            elif "," in ports_str:
-                ports = [int(p) for p in ports_str.split(",")]
-            else:
-                ports = [int(ports_str)]
-            
             scanner = port_scanner.PortScanner(timeout=1, threads=50)
-            result = scanner.scan_range(host, list(ports))
+            result = scanner.scan(host, ports=ports_str)
             
-            open_ports = [p for p in result.ports if p.is_open]
-            
-            if open_ports:
-                self.result_queue.put({"type": "output", "text": f"🟢 Portas abertas ({len(open_ports)}):\n"})
-                for p in open_ports:
+            if result.open_ports:
+                self.result_queue.put({"type": "output", "text": f"🟢 Portas abertas ({len(result.open_ports)}):\n"})
+                for p in result.open_ports:
                     service = p.service or "?"
                     banner = f" - {p.banner[:50]}" if p.banner else ""
-                    self.result_queue.put({"type": "output", "text": f"   {p.port:5d}  {service:15}{banner}"})
+                    self.result_queue.put({"type": "output", "text": f"   {p.number:5d}  {service:15}{banner}"})
             else:
                 self.result_queue.put({"type": "output", "text": "   Nenhuma porta aberta encontrada"})
             
-            self.result_queue.put({"type": "output", "text": f"\n⏱️ Tempo: {result.scan_time:.2f}s"})
+            self.result_queue.put({"type": "output", "text": f"\n⏱️ Tempo: {result.scan_time_ms/1000:.2f}s"})
+            self.result_queue.put({"type": "output", "text": f"📊 Portas: {result.ports_scanned} scaneadas | {result.closed_ports} fechadas | {result.filtered_ports} filtradas"})
             
         except Exception as e:
             self.result_queue.put({"type": "output", "text": f"❌ Erro: {e}"})
@@ -433,9 +546,9 @@ class NetworkInfoFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "Network Info")
-        self._setup_ui()
+        self._setup_netinfo_ui()
     
-    def _setup_ui(self):
+    def _setup_netinfo_ui(self):
         """Configura UI."""
         self.run_btn = ttk.Button(self.input_frame, text="🔄 Refresh", command=self._run)
         self.run_btn.pack(side=tk.LEFT, padx=5)
@@ -497,9 +610,9 @@ class HTTPFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "HTTP")
-        self._setup_ui()
+        self._setup_http_ui()
     
-    def _setup_ui(self):
+    def _setup_http_ui(self):
         """Configura UI."""
         ttk.Label(self.input_frame, text="URL:").pack(side=tk.LEFT)
         self.url_var = tk.StringVar(value="https://google.com")
@@ -528,11 +641,22 @@ class HTTPFrame(ModuleFrame):
             
             self.result_queue.put({"type": "output", "text": f"📊 Status: {result.status_code}"})
             self.result_queue.put({"type": "output", "text": f"⏱️ Tempo: {result.response_time_ms/1000:.3f}s"})
+            self.result_queue.put({"type": "output", "text": f"📄 Tamanho: {result.content_length/1024:.1f} KB" if result.content_length else ""})
             
             if hasattr(result, 'ssl_info') and result.ssl_info:
+                ssl = result.ssl_info
                 self.result_queue.put({"type": "output", "text": f"\n🔒 SSL/TLS:"})
-                self.result_queue.put({"type": "output", "text": f"   Issuer: {result.ssl_info.issuer}"})
-                self.result_queue.put({"type": "output", "text": f"   Expira: {result.ssl_info.not_after}"})
+                self.result_queue.put({"type": "output", "text": f"   ✅ Válido: {ssl.valid}"})
+                self.result_queue.put({"type": "output", "text": f"   🏢 Issuer: {ssl.issuer}"})
+                self.result_queue.put({"type": "output", "text": f"   📅 Expira: {ssl.valid_until}"})
+                self.result_queue.put({"type": "output", "text": f"   ⏳ Dias restantes: {ssl.days_remaining}"})
+                if ssl.protocol:
+                    self.result_queue.put({"type": "output", "text": f"   🔐 Protocolo: {ssl.protocol}"})
+            
+            if hasattr(result, 'redirects') and result.redirects:
+                self.result_queue.put({"type": "output", "text": f"\n🔀 Redirects ({len(result.redirects)}):"})
+                for r in result.redirects:
+                    self.result_queue.put({"type": "output", "text": f"   {r.status_code} → {r.url[:60]}"})
             
             if hasattr(result, 'headers') and result.headers:
                 self.result_queue.put({"type": "output", "text": f"\n📋 Headers:"})
@@ -554,9 +678,9 @@ class ARPFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "ARP Scanner")
-        self._setup_ui()
+        self._setup_arp_ui()
     
-    def _setup_ui(self):
+    def _setup_arp_ui(self):
         """Configura UI."""
         ttk.Label(self.input_frame, text="Network:").pack(side=tk.LEFT)
         self.net_var = tk.StringVar(value="192.168.1.0/24")
@@ -631,9 +755,9 @@ class WhoisFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "WHOIS")
-        self._setup_ui()
+        self._setup_whois_ui()
     
-    def _setup_ui(self):
+    def _setup_whois_ui(self):
         """Configura UI."""
         ttk.Label(self.input_frame, text="Domain/IP:").pack(side=tk.LEFT)
         self.query_var = tk.StringVar(value="google.com")
@@ -697,9 +821,9 @@ class ConnectionsFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "Connections")
-        self._setup_ui()
+        self._setup_conn_ui()
     
-    def _setup_ui(self):
+    def _setup_conn_ui(self):
         """Configura UI."""
         self.run_btn = ttk.Button(self.input_frame, text="🔄 Refresh", command=self._run)
         self.run_btn.pack(side=tk.LEFT, padx=5)
@@ -738,18 +862,18 @@ class ConnectionsFrame(ModuleFrame):
                 by_process[pid].append(conn)
             
             for pid, conns in list(by_process.items())[:20]:
-                process = conns[0].process if hasattr(conns[0], 'process') else "Unknown"
+                process = conns[0].process_name if hasattr(conns[0], 'process_name') else "Unknown"
                 self.result_queue.put({"type": "output", "text": f"\n📦 {process} (PID: {pid})"})
                 
                 for conn in conns[:5]:
-                    local = f"{conn.local_address}:{conn.local_port}"
-                    remote = f"{conn.remote_address}:{conn.remote_port}" if conn.remote_address else ""
-                    conn_type = conn.type if hasattr(conn, 'type') else "?"
-                    status = conn.status if hasattr(conn, 'status') else ""
-                    self.result_queue.put({"type": "output", "text": f"   {conn_type:4} {local:25} → {remote:25} {status}"})
+                    local = f"{conn.local_addr}:{conn.local_port}"
+                    remote = f"{conn.remote_addr}:{conn.remote_port}" if conn.remote_addr else ""
+                    proto = conn.protocol if hasattr(conn, 'protocol') else "?"
+                    state_str = conn.state.value if hasattr(conn.state, 'value') else str(conn.state)
+                    self.result_queue.put({"type": "output", "text": f"   {proto.upper():4} {local:25} → {remote:25} {state_str}"})
             
             stats = monitor.get_stats()
-            self.result_queue.put({"type": "output", "text": f"\n📊 Total: {stats.total} | TCP: {stats.tcp} | UDP: {stats.udp}"})
+            self.result_queue.put({"type": "output", "text": f"\n📊 Total: {stats.total} | TCP: {stats.tcp} | UDP: {stats.udp} | ESTABLISHED: {stats.established} | LISTEN: {stats.listening}"})
             
         except Exception as e:
             self.result_queue.put({"type": "output", "text": f"❌ Erro: {e}"})
@@ -761,20 +885,148 @@ class ConnectionsFrame(ModuleFrame):
 # FRAME - BANDWIDTH
 # =============================================================================
 
-class BandwidthFrame(ModuleFrame):
-    """Frame para teste de velocidade."""
+class BandwidthFrame(ttk.Frame):
+    """Frame para teste de velocidade com gráficos."""
     
     def __init__(self, parent):
-        super().__init__(parent, "Bandwidth")
-        self._setup_ui()
+        super().__init__(parent)
+        self.result_queue = queue.Queue()
+        self.is_running = False
+        self.speed_data = {"download": [], "upload": [], "ping": []}
+        self._setup_bw_ui()
+        self._start_queue_checker()
     
-    def _setup_ui(self):
-        """Configura UI."""
-        self.run_btn = ttk.Button(self.input_frame, text="▶ Speed Test", command=self._run)
+    def _setup_bw_ui(self):
+        """Configura UI com gráfico."""
+        # Frame de controlo
+        control_frame = ttk.Frame(self)
+        control_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.run_btn = ttk.Button(control_frame, text="▶ Full Speed Test", command=self._run)
         self.run_btn.pack(side=tk.LEFT, padx=5)
         
-        self.quick_btn = ttk.Button(self.input_frame, text="⚡ Quick Test", command=self._quick)
+        self.quick_btn = ttk.Button(control_frame, text="⚡ Quick Test", command=self._quick)
         self.quick_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Frame principal com 2 colunas
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        # Coluna esquerda - Gráfico
+        if HAS_MATPLOTLIB:
+            graph_frame = ttk.Frame(main_frame)
+            graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            
+            self.fig = Figure(figsize=(5, 4), dpi=100, facecolor=COLORS["bg"])
+            self.ax = self.fig.add_subplot(111)
+            self._setup_graph()
+            
+            self.canvas = FigureCanvasTkAgg(self.fig, master=graph_frame)
+            self.canvas.draw()
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        # Coluna direita - Resultados
+        result_frame = ttk.Frame(main_frame)
+        result_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        
+        # Área de texto para output
+        self.output = scrolledtext.ScrolledText(
+            result_frame,
+            wrap=tk.WORD,
+            font=FONTS["mono"],
+            bg=COLORS["text_bg"],
+            fg=COLORS["success"],
+            insertbackground=COLORS["highlight"],
+            selectbackground=COLORS["accent"],
+            relief=tk.FLAT,
+            borderwidth=0,
+            padx=10,
+            pady=10,
+            height=15,
+            width=40
+        )
+        self.output.pack(fill=tk.BOTH, expand=True)
+    
+    def _setup_graph(self):
+        """Configura gráfico de barras."""
+        self.ax.set_facecolor(COLORS["bg"])
+        self.ax.tick_params(colors=COLORS["fg"])
+        self.ax.spines['bottom'].set_color(COLORS["border"])
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['left'].set_color(COLORS["border"])
+        self.ax.set_title("Speed Test Results", color=COLORS["highlight"], fontsize=12, fontweight='bold')
+    
+    def _update_graph(self, download_mbps: float, upload_mbps: float, ping_ms: float):
+        """Atualiza gráfico com resultados."""
+        if not HAS_MATPLOTLIB:
+            return
+            
+        self.ax.clear()
+        self._setup_graph()
+        
+        # Dados
+        categories = ['Download\n(Mbps)', 'Upload\n(Mbps)', 'Ping\n(ms)']
+        values = [download_mbps, upload_mbps, ping_ms]
+        colors_bar = [COLORS["success"], COLORS["highlight"], COLORS["warning"]]
+        
+        bars = self.ax.bar(categories, values, color=colors_bar, width=0.6, edgecolor='none')
+        
+        # Adicionar valores nas barras
+        for bar, val in zip(bars, values):
+            height = bar.get_height()
+            self.ax.annotate(f'{val:.1f}',
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 5),
+                textcoords="offset points",
+                ha='center', va='bottom',
+                color=COLORS["fg"],
+                fontsize=11,
+                fontweight='bold')
+        
+        self.ax.set_ylabel('', color=COLORS["fg"])
+        self.ax.tick_params(axis='x', colors=COLORS["fg"])
+        self.ax.tick_params(axis='y', colors=COLORS["fg"])
+        
+        self.fig.tight_layout()
+        self.canvas.draw()
+    
+    def _start_queue_checker(self):
+        """Inicia verificação da queue."""
+        self._check_queue()
+    
+    def _check_queue(self):
+        """Verifica mensagens na queue."""
+        try:
+            while True:
+                msg = self.result_queue.get_nowait()
+                if msg["type"] == "output":
+                    self.output.insert(tk.END, msg["text"] + "\n")
+                    self.output.see(tk.END)
+                elif msg["type"] == "graph":
+                    self._update_graph(msg["download"], msg["upload"], msg["ping"])
+                elif msg["type"] == "done":
+                    self.is_running = False
+        except:
+            pass
+        self.after(100, self._check_queue)
+    
+    def clear_output(self):
+        """Limpa output."""
+        self.output.delete("1.0", tk.END)
+    
+    def append_output(self, text: str):
+        """Adiciona texto ao output."""
+        self.output.insert(tk.END, text + "\n")
+        self.output.see(tk.END)
+    
+    def run_async(self, func, *args):
+        """Executa função em thread."""
+        if self.is_running:
+            return
+        self.is_running = True
+        thread = threading.Thread(target=func, args=args, daemon=True)
+        thread.start()
     
     def _quick(self):
         """Teste rápido."""
@@ -789,10 +1041,19 @@ class BandwidthFrame(ModuleFrame):
             bw = bandwidth.BandwidthTest(timeout=10)
             result = bw.quick_test()
             
-            self.result_queue.put({"type": "output", "text": f"📥 Download: {result['download']}"})
-            self.result_queue.put({"type": "output", "text": f"📶 Ping: {result['ping']}"})
-            self.result_queue.put({"type": "output", "text": f"📊 Jitter: {result['jitter']}"})
-            self.result_queue.put({"type": "output", "text": f"🌐 IP: {result['client_ip']}"})
+            dl_speed = float(result['download'].replace(' Mbps', '').replace(' Kbps', ''))
+            
+            self.result_queue.put({"type": "output", "text": "━" * 35})
+            self.result_queue.put({"type": "output", "text": "   📥 DOWNLOAD"})
+            self.result_queue.put({"type": "output", "text": f"      {result['download']}"})
+            self.result_queue.put({"type": "output", "text": "━" * 35})
+            self.result_queue.put({"type": "output", "text": f"   📶 Ping: {result['ping']}"})
+            self.result_queue.put({"type": "output", "text": f"   📊 Jitter: {result['jitter']}"})
+            self.result_queue.put({"type": "output", "text": f"   🌐 IP: {result['client_ip']}"})
+            
+            # Atualizar gráfico
+            ping_val = float(result['ping'].replace(' ms', ''))
+            self.result_queue.put({"type": "graph", "download": dl_speed, "upload": 0, "ping": ping_val})
             
         except Exception as e:
             self.result_queue.put({"type": "output", "text": f"❌ Erro: {e}"})
@@ -811,21 +1072,51 @@ class BandwidthFrame(ModuleFrame):
         try:
             bw = bandwidth.BandwidthTest(timeout=15)
             
+            dl_mbps = 0
+            ul_mbps = 0
+            ping_ms = 0
+            
             # Latência
             self.result_queue.put({"type": "output", "text": "📶 Testando latência..."})
             latency = bw.test_latency()
             if "error" not in latency:
-                self.result_queue.put({"type": "output", "text": f"   Ping: {latency['avg']:.1f} ms"})
-                self.result_queue.put({"type": "output", "text": f"   Jitter: {latency['jitter']:.1f} ms"})
+                ping_ms = latency['avg']
+                self.result_queue.put({"type": "output", "text": f"   ✓ Ping: {latency['avg']:.1f} ms"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Jitter: {latency['jitter']:.1f} ms"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Min/Max: {latency['min']:.1f}/{latency['max']:.1f} ms"})
             
             # Download
             self.result_queue.put({"type": "output", "text": "\n📥 Testando download..."})
             dl = bw.test_download()
             if dl.success:
-                self.result_queue.put({"type": "output", "text": f"   Velocidade: {dl.speed_human}"})
-                self.result_queue.put({"type": "output", "text": f"   Transferido: {dl.bytes_transferred/1e6:.1f} MB"})
+                dl_mbps = dl.speed_mbps
+                self.result_queue.put({"type": "output", "text": f"   ✓ Velocidade: {dl.speed_human}"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Transferido: {dl.bytes_transferred/1e6:.1f} MB"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Duração: {dl.duration_seconds:.1f}s"})
             else:
-                self.result_queue.put({"type": "output", "text": f"   Erro: {dl.error}"})
+                self.result_queue.put({"type": "output", "text": f"   ✗ Erro: {dl.error}"})
+            
+            # Upload
+            self.result_queue.put({"type": "output", "text": "\n📤 Testando upload..."})
+            ul = bw.test_upload()
+            if ul.success:
+                ul_mbps = ul.speed_mbps
+                self.result_queue.put({"type": "output", "text": f"   ✓ Velocidade: {ul.speed_human}"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Transferido: {ul.bytes_transferred/1e6:.1f} MB"})
+                self.result_queue.put({"type": "output", "text": f"   ✓ Duração: {ul.duration_seconds:.1f}s"})
+            else:
+                self.result_queue.put({"type": "output", "text": f"   ✗ Erro: {ul.error}"})
+            
+            # Resumo
+            self.result_queue.put({"type": "output", "text": "\n" + "═" * 35})
+            self.result_queue.put({"type": "output", "text": "   📊 RESUMO"})
+            self.result_queue.put({"type": "output", "text": "═" * 35})
+            self.result_queue.put({"type": "output", "text": f"   📥 Download: {dl_mbps:.2f} Mbps"})
+            self.result_queue.put({"type": "output", "text": f"   📤 Upload:   {ul_mbps:.2f} Mbps"})
+            self.result_queue.put({"type": "output", "text": f"   📶 Ping:     {ping_ms:.1f} ms"})
+            
+            # Atualizar gráfico
+            self.result_queue.put({"type": "graph", "download": dl_mbps, "upload": ul_mbps, "ping": ping_ms})
             
         except Exception as e:
             self.result_queue.put({"type": "output", "text": f"❌ Erro: {e}"})
@@ -842,9 +1133,9 @@ class MTUFrame(ModuleFrame):
     
     def __init__(self, parent):
         super().__init__(parent, "MTU Discovery")
-        self._setup_ui()
+        self._setup_mtu_ui()
     
-    def _setup_ui(self):
+    def _setup_mtu_ui(self):
         """Configura UI."""
         ttk.Label(self.input_frame, text="Host:").pack(side=tk.LEFT)
         self.host_var = tk.StringVar(value="8.8.8.8")
@@ -934,42 +1225,122 @@ class NetworkAnalyzerProGUI:
         self._setup_ui()
     
     def _setup_style(self):
-        """Configura estilo dark mode."""
+        """Configura estilo dark mode vibrante."""
         style = ttk.Style()
         
         self.root.configure(bg=COLORS["bg"])
         
-        # Configurar tema
+        # Tentar usar tema clam como base (melhor para customização)
+        try:
+            style.theme_use('clam')
+        except:
+            pass
+        
+        # Configurar tema base
         style.configure(".", 
             background=COLORS["bg"],
+            foreground=COLORS["fg"],
+            font=FONTS["default"],
+            borderwidth=0,
+            focuscolor=COLORS["accent"]
+        )
+        
+        # Frames
+        style.configure("TFrame", background=COLORS["bg"])
+        
+        # Labels
+        style.configure("TLabel", 
+            background=COLORS["bg"], 
             foreground=COLORS["fg"],
             font=FONTS["default"]
         )
         
-        style.configure("TFrame", background=COLORS["bg"])
-        style.configure("TLabel", background=COLORS["bg"], foreground=COLORS["fg"])
-        style.configure("TButton", padding=5)
-        style.configure("TEntry", fieldbackground=COLORS["bg_lighter"])
-        style.configure("TCombobox", fieldbackground=COLORS["bg_lighter"])
+        # Botões vibrantes
+        style.configure("TButton",
+            background=COLORS["accent"],
+            foreground=COLORS["fg"],
+            padding=(15, 8),
+            font=FONTS["default"],
+            borderwidth=0
+        )
+        style.map("TButton",
+            background=[("active", COLORS["accent_hover"]), ("pressed", COLORS["bg_lighter"])],
+            foreground=[("active", COLORS["fg"])]
+        )
         
-        style.configure("TNotebook", background=COLORS["bg"])
-        style.configure("TNotebook.Tab", padding=[10, 5])
+        # Entradas
+        style.configure("TEntry",
+            fieldbackground=COLORS["text_bg"],
+            foreground=COLORS["fg"],
+            insertcolor=COLORS["highlight"],
+            padding=8
+        )
+        
+        # Combobox
+        style.configure("TCombobox",
+            fieldbackground=COLORS["text_bg"],
+            background=COLORS["bg_lighter"],
+            foreground=COLORS["fg"],
+            arrowcolor=COLORS["accent"],
+            padding=5
+        )
+        style.map("TCombobox",
+            fieldbackground=[("readonly", COLORS["text_bg"])],
+            selectbackground=[("readonly", COLORS["accent"])]
+        )
+        
+        # Notebook (abas) - Visual moderno
+        style.configure("TNotebook",
+            background=COLORS["bg"],
+            borderwidth=0,
+            tabmargins=[5, 5, 5, 0]
+        )
+        style.configure("TNotebook.Tab",
+            background=COLORS["bg_light"],
+            foreground=COLORS["fg_dim"],
+            padding=[15, 8],
+            font=FONTS["default"],
+            borderwidth=0
+        )
+        style.map("TNotebook.Tab",
+            background=[("selected", COLORS["accent"]), ("active", COLORS["bg_lighter"])],
+            foreground=[("selected", COLORS["fg"]), ("active", COLORS["fg"])],
+            expand=[("selected", [1, 1, 1, 0])]
+        )
+        
+        # Scrollbar
+        style.configure("Vertical.TScrollbar",
+            background=COLORS["bg_lighter"],
+            troughcolor=COLORS["bg"],
+            arrowcolor=COLORS["accent"]
+        )
     
     def _setup_ui(self):
         """Configura interface."""
-        # Header
+        # Header com gradiente visual
         header = ttk.Frame(self.root)
-        header.pack(fill=tk.X, padx=10, pady=5)
+        header.pack(fill=tk.X, padx=15, pady=10)
         
-        title = ttk.Label(header, text="🔍 Network Analyzer Pro", font=FONTS["title"])
+        # Título com cor vibrante
+        title = tk.Label(header, 
+            text="🔍 Network Analyzer Pro", 
+            font=FONTS["title"],
+            bg=COLORS["bg"],
+            fg=COLORS["highlight"]
+        )
         title.pack(side=tk.LEFT)
         
-        version = ttk.Label(header, text="v2.0", font=FONTS["small"], foreground=COLORS["fg_dim"])
+        version = tk.Label(header, 
+            text="v2.0", 
+            font=FONTS["small"],
+            bg=COLORS["bg"],
+            fg=COLORS["accent"]
+        )
         version.pack(side=tk.LEFT, padx=10)
         
         # Notebook (abas)
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
         
         # Adicionar abas
         self._add_tab(PingFrame, "🏓 Ping")
@@ -984,9 +1355,16 @@ class NetworkAnalyzerProGUI:
         self._add_tab(BandwidthFrame, "⚡ Speed")
         self._add_tab(MTUFrame, "📏 MTU")
         
-        # Status bar
-        self.status = ttk.Label(self.root, text="Ready", foreground=COLORS["fg_dim"])
-        self.status.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
+        # Status bar com cor vibrante
+        self.status = tk.Label(self.root, 
+            text="✨ Ready", 
+            bg=COLORS["bg"],
+            fg=COLORS["success"],
+            font=FONTS["small"],
+            anchor=tk.W,
+            padx=15
+        )
+        self.status.pack(side=tk.BOTTOM, fill=tk.X, pady=8)
     
     def _add_tab(self, frame_class, title: str):
         """Adiciona uma aba."""
