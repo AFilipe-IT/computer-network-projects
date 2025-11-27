@@ -1,6 +1,6 @@
 # Network Analyzer - Ping/Traceroute Avançado
 
-Ferramenta de análise de rede que combina ping e traceroute com capacidade de gerar gráficos de desempenho.
+Ferramenta de análise de rede que combina ping e traceroute com capacidade de gerar gráficos de desempenho. Inclui **interface gráfica (GUI)** para diagnóstico visual em tempo real.
 
 > **Nota:** Este projeto foi desenvolvido com auxílio de IA (GitHub Copilot).
 
@@ -9,7 +9,8 @@ Ferramenta de análise de rede que combina ping e traceroute com capacidade de g
 - **Ping avançado**: Mede latência com estatísticas completas (min/max/média/jitter)
 - **Traceroute**: Traça a rota até o destino com latência por hop
 - **Gráficos**: Gera visualizações de latência ao longo do tempo
-- **Dois modos de uso**: Interativo e linha de comandos (CLI)
+- **Interface Gráfica (GUI)**: Diagnóstico visual em tempo real com gráficos dinâmicos
+- **Três modos de uso**: GUI, Interativo (terminal) e CLI (argumentos)
 
 ## Estrutura
 
@@ -17,6 +18,8 @@ Ferramenta de análise de rede que combina ping e traceroute com capacidade de g
 network_analyzer/
 ├── __init__.py          # Marcador de pacote
 ├── core.py              # Lógica principal (ping, traceroute, gráficos)
+├── gui.py               # Interface gráfica (Tkinter + Matplotlib)
+├── run_gui.py           # Launcher para a GUI
 ├── analyzer.py          # Modo interativo
 ├── analyzer_cli.py      # Modo CLI (argumentos)
 ├── graphs/              # Pasta para gráficos gerados
@@ -26,13 +29,29 @@ network_analyzer/
 ## Requisitos
 
 - Python 3.x
-- matplotlib (opcional, para gráficos)
+- matplotlib (para gráficos)
+- tkinter (incluído no Python)
 
 ```bash
 pip install matplotlib
 ```
 
 ## Uso
+
+### 🖥️ Interface Gráfica (GUI) - RECOMENDADO
+
+```bash
+cd network-tools
+python network_analyzer/run_gui.py
+```
+
+A interface gráfica permite:
+- Visualizar latência em **tempo real** com gráficos animados
+- Alternar entre modo Ping e Traceroute
+- Ver estatísticas actualizadas dinamicamente
+- Iniciar/parar análise a qualquer momento
+
+![GUI Preview](graphs/gui_preview.png)
 
 ### Modo Interativo
 
