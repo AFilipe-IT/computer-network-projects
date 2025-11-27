@@ -29,14 +29,11 @@ def interactive_mode() -> None:
     if not host:
         print("Host obrigatório. Saindo.")
         raise SystemExit(1)
-
-    start = _prompt_int("Porta inicial", 1)
-    end = _prompt_int("Porta final", 1024)
-    threads = _prompt_int("Número de workers", 100)
-    try:
-        timeout = float(input("Timeout por conexão (segundos) [0.5]: ") or 0.5)
-    except ValueError:
-        timeout = 0.5
+    # Usar defaults simples para tornar o modo interativo mais direto.
+    start = 1
+    end = 1024
+    threads = 100
+    timeout = 0.5
 
     print(f"Iniciando varredura em {host} ({start}-{end}) com {threads} workers...")
     open_ports = []

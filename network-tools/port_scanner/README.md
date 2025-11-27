@@ -28,7 +28,7 @@ Funcionalidades:
 
 Modos de execução
 
-1) Modo interativo (manual): executa perguntas no terminal.
+1) Modo interativo (manual): pede apenas o `Host/Hostname` e executa a varredura com valores padrão.
 
 	- Vá para a pasta `network-tools` e execute:
 
@@ -36,7 +36,8 @@ Modos de execução
 python -m port_scanner.scanner
 ```
 
-	- Será pedido `Host/Hostname alvo` e outros valores (pressione Enter para aceitar valores padrão).
+	- Será pedido apenas `Host/Hostname alvo`. As portas e parâmetros usados são:
+	  - `start=1`, `end=1024`, `threads=100`, `timeout=0.5`.
 
 2) Modo por argumentos (script CLI): não há prompts, tudo vem por flags.
 
