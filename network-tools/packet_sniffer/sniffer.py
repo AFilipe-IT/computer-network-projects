@@ -17,9 +17,12 @@ from .core import (
 
 def print_packet(packet) -> None:
     """Callback para imprimir pacote capturado."""
+    if not hasattr(print_packet, 'count'):
+        print_packet.count = 0
+    print_packet.count += 1
     try:
         info = parse_packet(packet)
-        print(format_packet_summary(info))
+        print(f"[{print_packet.count:04d}] {format_packet_summary(info)}")
     except Exception as e:
         print(f"Erro ao processar pacote: {e}")
 
@@ -88,6 +91,11 @@ def interactive_mode() -> None:
         print(f"Filtro: {protocol_filter}")
     print(f"Pacotes: {count if count > 0 else 'contínuo (Ctrl+C para parar)'}")
     print(f"{'='*70}\n")
+
+    if count == 0:
+        print("Modo contínuo ativo. Pressione Ctrl+C para parar.\n")
+    else:
+        print(f"Aguardando pacotes... (pode demorar se não houver tráfego)\n")
 
     try:
         packets = capture_packets(

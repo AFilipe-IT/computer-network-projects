@@ -24,6 +24,18 @@ def print_packet(packet) -> None:
         print(f"Erro ao processar pacote: {e}")
 
 
+def print_packet_with_counter(packet) -> None:
+    """Callback com contador para feedback visual."""
+    if not hasattr(print_packet_with_counter, 'count'):
+        print_packet_with_counter.count = 0
+    print_packet_with_counter.count += 1
+    try:
+        info = parse_packet(packet)
+        print(f"[{print_packet_with_counter.count:04d}] {format_packet_summary(info)}")
+    except Exception as e:
+        print(f"Erro ao processar pacote: {e}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Constrói o parser de argumentos."""
     p = argparse.ArgumentParser(
@@ -93,6 +105,11 @@ def main() -> None:
         print(f"Exportar para: {args.output}")
     print(f"{'='*70}\n")
 
+    if args.count == 0:
+        print("Modo contínuo ativo. Pressione Ctrl+C para parar.\n")
+    else:
+        print(f"Aguardando pacotes... (pode demorar se não houver tráfego)\n")
+
     # Capturar pacotes
     try:
         packets = capture_packets(
@@ -100,7 +117,7 @@ def main() -> None:
             count=args.count,
             protocol_filter=args.filter,
             timeout=args.timeout,
-            callback=print_packet,
+            callback=print_packet_with_counter,
             output_file=args.output,
         )
         print(f"\nCaptura concluída: {len(packets)} pacotes.")

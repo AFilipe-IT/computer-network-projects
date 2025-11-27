@@ -128,12 +128,14 @@ def capture_packets(
             print("Aviso: Pode ser necessário executar como root/admin para capturar pacotes.")
 
     try:
+        # Se callback fornecido, exibir pacotes em tempo real
+        # store=True para manter na memória mesmo com callback
         packets = sniff(
             iface=interface,
             count=count,
             filter=protocol_filter,
             timeout=timeout,
-            prn=callback,
+            prn=callback if callback else None,
             store=True,
         )
 

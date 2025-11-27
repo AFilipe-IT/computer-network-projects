@@ -1,0 +1,10 @@
+# Ficheiros de captura PCAP
+*.pcap
+*.pcapng
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
