@@ -36,3 +36,23 @@ python -m packet_sniffer.sniffer_cli -c 50 -f tcp -o capture.pcap
 
 **Nota**: Packet Sniffer requer Scapy (`pip install scapy`) e privilégios de administrador/root.
 
+### 4. Network Analyzer
+Ferramenta avançada de Ping e Traceroute com estatísticas completas e geração de gráficos de desempenho.
+
+```powershell
+cd network-tools
+# Ping com gráfico de latência
+python -m network_analyzer.analyzer_cli --host google.com --count 10 --graph
+
+# Traceroute com gráfico
+python -m network_analyzer.analyzer_cli --host 8.8.8.8 --mode traceroute --graph
+```
+
+📁 [Documentação completa](network_analyzer/README.md)
+
+**Nota**: Network Analyzer requer Matplotlib (`pip install matplotlib`) para gerar gráficos.
+
+---
+
+> **Nota:** Este projeto foi desenvolvido com auxílio de IA (GitHub Copilot).
+
