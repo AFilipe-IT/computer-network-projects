@@ -8,10 +8,16 @@ from datetime import datetime
 from typing import Callable, Optional, Dict, List
 
 try:
-    from scapy.all import sniff, wrpcap, get_if_list, Ether, IP, TCP, UDP, ICMP
+    from scapy.all import sniff, wrpcap, get_if_list, get_if_addr, Ether, IP, TCP, UDP, ICMP
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 
 def check_scapy() -> None:
@@ -31,6 +37,41 @@ def get_interfaces() -> List[str]:
         return interfaces if interfaces else ["Nenhuma interface encontrada"]
     except Exception as e:
         return [f"Erro ao listar interfaces: {e}"]
+
+
+def get_interface_info(iface: str) -> str:
+    """Retorna informação amigável sobre a interface."""
+    try:
+        # Tentar obter IP da interface
+        try:
+            ip = get_if_addr(iface)
+            if ip and ip != '0.0.0.0':
+                return f"{iface} (IP: {ip})"
+        except:
+            pass
+        
+        # Tentar usar psutil para nome amigável (Windows)
+        if PSUTIL_AVAILABLE:
+            try:
+                for nic_name, addrs in psutil.net_if_addrs().items():
+                    for addr in addrs:
+                        if addr.family == 2:  # IPv4
+                            # Verificar se o nome curto corresponde
+                            if 'Loopback' in iface and 'Loopback' in nic_name:
+                                return f"Loopback ({addr.address})"
+                            # Retornar nome amigável se encontrado
+                            if nic_name in ['Ethernet', 'Wi-Fi', 'Local Area Connection']:
+                                return f"{nic_name} ({addr.address})"
+            except:
+                pass
+        
+        # Fallback: simplificar nome do device
+        if 'Loopback' in iface:
+            return "Loopback (127.0.0.1)"
+        
+        return iface
+    except:
+        return iface
 
 
 def parse_packet(packet) -> Dict[str, str]:

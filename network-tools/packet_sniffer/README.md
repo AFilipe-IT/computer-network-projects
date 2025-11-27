@@ -41,7 +41,7 @@ python -m packet_sniffer.sniffer
 ```
 
 - Exemplo de sessão:
-  - Interface: `Ethernet` ou número da lista
+  - Interface: `0` para todas, número da lista (ex: `1`, `2`), ou Enter para todas
   - Filtro BPF: `tcp port 80` (ou Enter para capturar tudo)
   - Pacotes: `20` (ou `0` para contínuo)
   - Exportar: `s` para guardar PCAP

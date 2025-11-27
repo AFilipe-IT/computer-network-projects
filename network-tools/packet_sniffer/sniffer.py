@@ -9,6 +9,7 @@ from typing import Optional
 from .core import (
     check_scapy,
     get_interfaces,
+    get_interface_info,
     capture_packets,
     parse_packet,
     format_packet_summary,
@@ -42,15 +43,21 @@ def interactive_mode() -> None:
     print("Interfaces disponíveis:")
     interfaces = get_interfaces()
     for idx, iface in enumerate(interfaces, 1):
-        print(f"  {idx}. {iface}")
+        friendly_name = get_interface_info(iface)
+        print(f"  {idx}. {friendly_name}")
+    print(f"  0. Todas as interfaces")
 
     # Prompt: interface
-    iface_input = input("\nInterface (nome ou número, Enter para todas): ").strip()
+    iface_input = input("\nEscolha a interface (número ou Enter para todas): ").strip()
     if iface_input:
         if iface_input.isdigit():
-            idx = int(iface_input) - 1
-            if 0 <= idx < len(interfaces):
-                interface = interfaces[idx]
+            idx = int(iface_input)
+            if idx == 0:
+                interface = None
+                print("→ Capturando em todas as interfaces")
+            elif 1 <= idx <= len(interfaces):
+                interface = interfaces[idx - 1]
+                print(f"→ Capturando em: {get_interface_info(interface)}")
             else:
                 print("Número inválido, usando todas as interfaces.")
                 interface = None
@@ -58,6 +65,7 @@ def interactive_mode() -> None:
             interface = iface_input
     else:
         interface = None
+        print("→ Capturando em todas as interfaces")
 
     # Prompt: filtro de protocolo
     print("\nFiltros comuns: tcp, udp, icmp, tcp port 80, udp port 53")
