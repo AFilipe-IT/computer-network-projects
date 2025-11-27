@@ -1,0 +1,18 @@
+# Network Analyzer Pro - Dependencies
+# ===================================
+# Ferramenta completa de análise de rede
+
+# Visualização de gráficos
+matplotlib>=3.7.0
+
+# Consultas DNS
+dnspython>=2.4.0
+
+# Requisições HTTP
+requests>=2.31.0
+
+# Informações do sistema
+psutil>=5.9.0
+
+# Opcional: speedtest preciso (descomente se necessário)
+# speedtest-cli>=2.1.3

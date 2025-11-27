@@ -36,13 +36,37 @@ python -m packet_sniffer.sniffer_cli -c 50 -f tcp -o capture.pcap
 
 **Nota**: Packet Sniffer requer Scapy (`pip install scapy`) e privilégios de administrador/root.
 
-### 4. Network Analyzer
-Ferramenta avançada de Ping e Traceroute com estatísticas completas, geração de gráficos e **interface gráfica (GUI)** para diagnóstico em tempo real.
+### 4. Network Analyzer Pro 🆕
+
+Ferramenta **completa** de análise de rede com 11 módulos especializados e interface gráfica profissional.
+
+#### Módulos Disponíveis:
+| Módulo | Descrição |
+|--------|-----------|
+| 🏓 **Ping** | Teste de conectividade com estatísticas avançadas |
+| 🛤️ **Traceroute** | Rastreamento de rota com geolocalização |
+| 📋 **DNS Analyzer** | Consultas DNS (A, AAAA, MX, NS, TXT, CNAME, SOA) |
+| 🌐 **HTTP Analyzer** | Análise de headers, SSL/TLS, timing |
+| 🖥️ **Network Info** | Informações de interfaces, IP público, gateway |
+| 🔍 **Port Scanner** | Scanner TCP com detecção de serviços e banners |
+| 📝 **WHOIS Lookup** | Consultas WHOIS e geolocalização |
+| 🔌 **Connection Monitor** | Monitor de conexões ativas por processo |
+| ⚡ **Bandwidth Test** | Teste de velocidade de download/latência |
+| 📡 **ARP Scanner** | Descoberta de hosts na rede local |
+| 📏 **MTU Discovery** | Descoberta de Path MTU |
+
+#### Execução:
 
 ```powershell
 cd network-tools
 
-# Interface Gráfica (RECOMENDADO)
+# Instalar dependências
+pip install -r requirements.txt
+
+# Interface Gráfica Completa (RECOMENDADO)
+python network_analyzer/run_gui_pro.py
+
+# Interface Gráfica Simples (apenas Ping/Traceroute)
 python network_analyzer/run_gui.py
 
 # CLI: Ping com gráfico de latência
@@ -52,9 +76,52 @@ python -m network_analyzer.analyzer_cli --host google.com --count 10 --graph
 python -m network_analyzer.analyzer_cli --host 8.8.8.8 --mode traceroute --graph
 ```
 
+#### Uso como Biblioteca:
+
+```python
+from network_analyzer import modules
+
+# Ping
+result = modules.ping("google.com")
+print(f"Latência: {result.time_ms}ms")
+
+# DNS
+dns = modules.dns_lookup("google.com")
+for record in dns.records:
+    print(f"{record.type}: {record.value}")
+
+# Port Scan
+ports = modules.scan_common_ports("192.168.1.1")
+for p in ports:
+    if p.is_open:
+        print(f"Porta {p.port}: {p.service}")
+
+# Descobrir hosts na rede
+hosts = modules.scan_network("192.168.1.0/24")
+for host in hosts.hosts:
+    print(f"{host.ip} - {host.mac}")
+```
+
 📁 [Documentação completa](network_analyzer/README.md)
 
-**Nota**: Network Analyzer requer Matplotlib (`pip install matplotlib`) para gráficos.
+**Dependências**: `pip install matplotlib dnspython requests psutil`
+
+---
+
+## Instalação Rápida
+
+```powershell
+# Clonar repositório
+git clone https://github.com/AFilipe-IT/computer-network-projects.git
+cd computer-network-projects/network-tools
+
+# Criar ambiente virtual
+python -m venv .venv
+.\.venv\Scripts\Activate
+
+# Instalar dependências
+pip install -r requirements.txt
+```
 
 ---
 
