@@ -141,8 +141,16 @@ def capture_packets(
 
         # Exportar para PCAP se solicitado
         if output_file and packets:
-            wrpcap(output_file, packets)
-            print(f"\n{len(packets)} pacotes exportados para: {output_file}")
+            # Criar diretório captures/ se não existir
+            output_path = output_file
+            if not os.path.isabs(output_file):
+                # Se caminho relativo, salvar em captures/
+                captures_dir = os.path.join(os.path.dirname(__file__), 'captures')
+                os.makedirs(captures_dir, exist_ok=True)
+                output_path = os.path.join(captures_dir, output_file)
+            
+            wrpcap(output_path, packets)
+            print(f"\n{len(packets)} pacotes exportados para: {output_path}")
 
         return packets
 

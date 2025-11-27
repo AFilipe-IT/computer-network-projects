@@ -1,6 +1,7 @@
 # Ficheiros de captura PCAP
 *.pcap
 *.pcapng
+captures/
 
 # Python cache
 __pycache__/
