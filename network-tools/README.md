@@ -12,5 +12,3 @@ Como usar rapidamente (exemplo):
 cd network-tools
 python -m ip_subnet_calculator.cli --network 192.168.0.0/24 --hosts 100,50 --json
 ```
-
-Se quiseres, posso adicionar instruções de contribuição, licenciamento e CI.
