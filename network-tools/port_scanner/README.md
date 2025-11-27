@@ -20,14 +20,21 @@ Pequeno utilitário didático para varredura de portas TCP em um host, implement
 
 - Executa apenas um prompt para o Host/Hostname e usa valores predefinidos para os restantes parâmetros.
 
-- Exemplo:
+- Exemplo (a partir da pasta do projecto):
 
-`powershell
-cd d:/Documents/computer-network-projects/network-tools
+```powershell
+cd network-tools
 python -m port_scanner.scanner
-`
+```
 
-- O scanner pede apenas Host/Hostname alvo e usa por omissão: start=1, end=1024, 	hreads=100, 	imeout=0.5.
+- Se estiveres na raiz do repositório e o pacote estiver instalado (por exemplo com
+	`pip install -e .` a partir da pasta adequada), podes correr o modo CLI directamente:
+
+```powershell
+python -m port_scanner.scanner_cli --host 127.0.0.1 --start 1 --end 1024 --threads 100 --timeout 0.3
+```
+
+- O scanner pede apenas `Host/Hostname` e usa por omissão: `start=1`, `end=1024`, `threads=100`, `timeout=0.5`.
 
 ### 2) Modo por argumentos (CLI)
 
