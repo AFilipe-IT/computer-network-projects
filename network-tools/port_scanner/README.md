@@ -1,59 +1,53 @@
-# Port Scanner (simplificado)
+﻿# Port Scanner (simplificado)
 
-Pequeno utilitário para varredura de portas TCP em um host, implementado em Python.
+Pequeno utilitário didático para varredura de portas TCP em um host, implementado em Python.
 
-Funcionalidades:
+## Estrutura
 
-Exemplo de uso:
+- core.py       : lógica reutilizável da varredura (funções testáveis).
+- scanner.py    : entrada em modo interativo (pergunta apenas o host).
+- scanner_cli.py: entrada em modo por argumentos (rgparse).
 
-```powershell
-python -m port_scanner.scanner --host 127.0.0.1 --start 1 --end 1024 --threads 200 --timeout 0.3
-```
+## Funcionalidades
 
-Notas:
-```markdown
-# Port Scanner (simplificado)
-
-Pequeno utilitário para varredura de portas TCP em um host, implementado em Python.
-
-Estrutura
-- `core.py`  : lógica reutilizável da varredura (funções testáveis).
-- `scanner.py`: entrada em modo interativo (pedidos via stdin).
-- `scanner_cli.py`: entrada em modo por argumentos (`argparse`).
-
-Funcionalidades:
-- Varredura TCP por ligação (`connect`) — apenas TCP.
+- Varredura TCP por ligação (connect)  apenas TCP.
 - Dois modos de execução: interativo (manual) e por argumentos (scripts/automação).
-- Controle de concorrência via workers (threads) e timeout por conexão.
+- Controlo de concorrência via workers (threads) e timeout por conexão.
 
-Modos de execução
+## Modos de execução
 
-1) Modo interativo (manual): pede apenas o `Host/Hostname` e executa a varredura com valores padrão.
+### 1) Modo interativo (manual)
 
-	- Vá para a pasta `network-tools` e execute:
+- Executa apenas um prompt para o Host/Hostname e usa valores predefinidos para os restantes parâmetros.
 
-```powershell
+- Exemplo:
+
+`powershell
+cd d:/Documents/computer-network-projects/network-tools
 python -m port_scanner.scanner
-```
+`
 
-	- Será pedido apenas `Host/Hostname alvo`. As portas e parâmetros usados são:
-	  - `start=1`, `end=1024`, `threads=100`, `timeout=0.5`.
+- O scanner pede apenas Host/Hostname alvo e usa por omissão: start=1, end=1024, 	hreads=100, 	imeout=0.5.
 
-2) Modo por argumentos (script CLI): não há prompts, tudo vem por flags.
+### 2) Modo por argumentos (CLI)
 
-```powershell
+- Toda a configuração é passada por flags (útil para scripts e automação).
+
+`powershell
 python -m port_scanner.scanner_cli --host 127.0.0.1 --start 1 --end 1024 --threads 100 --timeout 0.3
-```
+`
 
-Notas rápidas
-- Limites de porta: `--start` >= 1, `--end` <= 65535 e `--start` <= `--end`.
-- Use `threads` com cuidado; muitos workers podem sobrecarregar o sistema.
+- --threads pode ser omitido para usar um valor calculado automaticamente (ver nota no README principal).
 
-Aviso legal
-- Executar scans em hosts que não são de tua propriedade pode ser ilegal ou contra políticas. Usa com responsabilidade.
+## Notas rápidas
 
-Pequena nota sobre autoria
+- Limites de porta: --start >= 1, --end <= 65535 e --start <= --end.
+- Evita usar um número muito alto de 	hreads; preferível deixar o valor automático na maioria dos casos.
 
-Um apoio automático (assistente de programação) foi usado pontualmente para organizar e clarificar o código. A intenção foi manter o projeto simples e didático — a lógica principal e decisões são do autor.
+## Aviso legal
 
-```
+- Executar scans em hosts que não são da tua propriedade pode ser ilegal ou contra políticas. Usa com responsabilidade.
+
+## Pequena nota sobre autoria
+
+Foi utilizado um apoio automático (assistente de programação) de forma discreta para organizar e clarificar o código. O objetivo foi manter o projecto simples e didático  a lógica principal e as decisões são do autor.
