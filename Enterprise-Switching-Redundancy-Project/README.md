@@ -95,9 +95,8 @@ Contribuições são bem‑vindas. Ao submeter alterações, inclua passos de te
 
 ## Licença
 
-Inclua um ficheiro `LICENSE` na raiz se pretenderes aplicar uma licença específica.
+Este projeto está licenciado sob a MIT License — consulte o ficheiro `LICENSE` na raiz do repositório para os termos completos.
 
 ---
 
 *Ficheiro principal do projecto — documentação e visão geral (Português).* 
-## License & Attribution
