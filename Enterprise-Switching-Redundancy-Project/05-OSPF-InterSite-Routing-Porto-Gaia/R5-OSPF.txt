@@ -1,0 +1,14 @@
+! ===== 05 – OSPF INTERSITE – R5 (Core Porto) =====
+
+router ospf 1
+ router-id 5.5.5.5
+
+ ! Link para DIST-SW6
+ network 10.51.0.0 0.0.0.255 area 0
+
+ ! Link para DIST-SW7
+ network 10.52.0.0 0.0.0.255 area 0
+
+ ! Ligações para R7 (Gaia)
+ network 10.55.0.0 0.0.0.255 area 0
+ network 10.77.0.0 0.0.0.255 area 0

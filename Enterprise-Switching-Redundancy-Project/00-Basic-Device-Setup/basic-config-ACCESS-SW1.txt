@@ -1,0 +1,31 @@
+! ===== BASIC CONFIG – ACCESS-SW1 =====
+hostname ACCESS-SW1
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! (Neste projeto básico não defino SVI de gestão.
+!  Se quiseres, podes criar mais tarde um VLAN de gestão.)
+
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+banner motd ^C
+ACESSO RESTRITO
+ACCESS-SW1 – Switch de acesso (Porto).
+^C
+
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh
+ transport output ssh

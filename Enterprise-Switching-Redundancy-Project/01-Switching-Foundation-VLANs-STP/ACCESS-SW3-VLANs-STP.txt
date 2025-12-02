@@ -1,0 +1,39 @@
+! ===== 01 – SWITCHING FOUNDATION (VLANs + STP) – ACCESS-SW3 (Gaia) =====
+
+! Spanning-Tree
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+
+! VLANs de Gaia
+vlan 73
+ name VLAN73-Users-Gaia
+vlan 74
+ name VLAN74-Users-Gaia
+vlan 75
+ name VLAN75-Infra-Gaia
+
+! Porta de acesso VLAN 75
+interface Ethernet0/0
+ switchport mode access
+ switchport access vlan 75
+ no shutdown
+
+! Porta de acesso VLAN 73
+interface Ethernet1/0
+ switchport mode access
+ switchport access vlan 73
+ no shutdown
+
+! Porta de acesso VLAN 74
+interface Ethernet2/0
+ switchport mode access
+ switchport access vlan 74
+ no shutdown
+
+! Uplink para R7 (router-on-a-stick, mais tarde)
+interface Ethernet3/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 73,74,75
+ switchport nonegotiate
+ no shutdown

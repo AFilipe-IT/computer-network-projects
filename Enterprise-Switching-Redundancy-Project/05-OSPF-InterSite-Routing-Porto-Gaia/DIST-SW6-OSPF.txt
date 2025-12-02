@@ -1,0 +1,13 @@
+! ===== 05 – OSPF INTERSITE – DIST-SW6 (Distribution Porto) =====
+
+router ospf 1
+ router-id 6.6.6.6
+
+ ! Link L3 para R5
+ network 10.51.0.0 0.0.0.255 area 0
+
+ ! VLAN 10 – Porto
+ network 10.10.0.0 0.0.0.255 area 0
+
+ ! VLAN 20 – Porto
+ network 10.20.0.0 0.0.0.255 area 0

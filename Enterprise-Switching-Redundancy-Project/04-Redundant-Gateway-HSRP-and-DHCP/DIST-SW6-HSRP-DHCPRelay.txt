@@ -1,0 +1,23 @@
+! ===== 04 – HSRP + DHCP RELAY – DIST-SW6 (Porto) =====
+! VLAN 10 e 20 – Gateway redundante + encaminhamento de DHCP para o R5
+
+! Subinterface VLAN 10
+interface Ethernet1/0.10
+ ip helper-address 10.51.0.5
+ standby 10 ip 10.10.0.1
+ standby 10 priority 110
+ standby 10 preempt
+ no shutdown
+
+! Subinterface VLAN 20
+interface Ethernet1/0.20
+ ip helper-address 10.51.0.5
+ standby 20 ip 10.20.0.1
+ standby 20 priority 110
+ standby 20 preempt
+ no shutdown
+
+! Notes:
+! DIST-SW6 será o ACTIVE nas duas VLANs (prioridade 110).
+! VIPs (gateways dos PCs): VLAN 10 -> 10.10.0.1, VLAN 20 -> 10.20.0.1
+! DHCP relay aponta para o R5: 10.51.0.5

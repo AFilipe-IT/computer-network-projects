@@ -1,0 +1,40 @@
+! ===== 01 – SWITCHING FOUNDATION (VLANs + STP) – ACCESS-SW2 =====
+
+! Spanning-Tree
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+
+! VLANs de utilizadores (Porto)
+vlan 10
+ name VLAN10-Users
+vlan 20
+ name VLAN20-Users
+
+! Porta de acesso para PC (VLAN 20)
+interface Ethernet0/0
+ switchport mode access
+ switchport access vlan 20
+ no shutdown
+
+! Uplinks L2 para ACCESS-SW1 (sem PortChannel ainda)
+interface Ethernet0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ no shutdown
+
+interface Ethernet0/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ no shutdown
+
+! Uplink L2 para o Distribution (DIST-SW7)
+interface Ethernet2/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ no shutdown

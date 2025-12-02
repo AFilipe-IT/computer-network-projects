@@ -1,0 +1,21 @@
+! ===== 04 – DHCP SERVER – R5 (Core Porto) =====
+
+! Reservar endereços para gateway/infra
+ip dhcp excluded-address 10.10.0.1 10.10.0.10
+ip dhcp excluded-address 10.20.0.1 10.20.0.10
+
+! Pool VLAN 10 – Porto
+ip dhcp pool VLAN10
+ network 10.10.0.0 255.255.255.0
+ default-router 10.10.0.1
+ dns-server 8.8.8.8
+
+! Pool VLAN 20 – Porto
+ip dhcp pool VLAN20
+ network 10.20.0.0 255.255.255.0
+ default-router 10.20.0.1
+ dns-server 8.8.8.8
+
+! Notes:
+! O default-router é o VIP do HSRP (10.10.0.1 / 10.20.0.1).
+! Os primeiros IPs (1–10) ficam reservados para gateway/infra.

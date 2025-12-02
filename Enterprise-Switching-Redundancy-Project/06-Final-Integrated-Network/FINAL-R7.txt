@@ -1,0 +1,66 @@
+! ===== FINAL CONFIG – R7 (Core Gaia) =====
+hostname R7
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! Router-on-a-stick para Gaia
+interface Ethernet0/0
+ no ip address
+ no shutdown
+
+interface Ethernet0/0.73
+ encapsulation dot1Q 73
+ ip address 10.73.0.254 255.255.255.0
+ no shutdown
+
+interface Ethernet0/0.74
+ encapsulation dot1Q 74
+ ip address 10.74.0.254 255.255.255.0
+ no shutdown
+
+interface Ethernet0/0.75
+ encapsulation dot1Q 75
+ ip address 10.75.0.254 255.255.255.0
+ no shutdown
+
+! Ligações com R5
+interface Ethernet0/2
+ ip address 10.55.0.7 255.255.255.0
+ no shutdown
+
+interface Ethernet0/3
+ ip address 10.77.0.7 255.255.255.0
+ no shutdown
+
+! OSPF
+router ospf 1
+ router-id 10.10.10.10
+ network 10.55.0.0 0.0.0.255 area 0
+ network 10.77.0.0 0.0.0.255 area 0
+ network 10.73.0.0 0.0.0.255 area 0
+ network 10.74.0.0 0.0.0.255 area 0
+ network 10.75.0.0 0.0.0.255 area 0
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+banner motd ^C
+ACESSO RESTRITO
+Equipamento R7 – Core Gaia.
+^C
+
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh

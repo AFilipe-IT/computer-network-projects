@@ -1,0 +1,19 @@
+! ===== 03 – ROUTER-ON-A-STICK – DIST-SW7 (Porto) =====
+! VLAN 10 e 20 a partir da interface física Ethernet2/0
+
+! Interface física ligada aos switches de acesso
+interface Ethernet2/0
+ no ip address
+ no shutdown
+
+! Subinterface VLAN 10
+interface Ethernet2/0.10
+ encapsulation dot1Q 10
+ ip address 10.10.0.3 255.255.255.0
+ no shutdown
+
+! Subinterface VLAN 20
+interface Ethernet2/0.20
+ encapsulation dot1Q 20
+ ip address 10.20.0.3 255.255.255.0
+ no shutdown

@@ -1,0 +1,68 @@
+! ===== FINAL CONFIG – R5 (Core Porto) =====
+hostname R5
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! Interfaces L3 (backbone + DISTs + R7)
+interface Ethernet0/0
+ ip address 10.51.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/1
+ ip address 10.52.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/2
+ ip address 10.55.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/3
+ ip address 10.77.0.5 255.255.255.0
+ no shutdown
+
+! DHCP – VLAN10 e VLAN20 (Porto)
+ip dhcp excluded-address 10.10.0.1 10.10.0.10
+ip dhcp excluded-address 10.20.0.1 10.20.0.10
+
+ip dhcp pool VLAN10
+ network 10.10.0.0 255.255.255.0
+ default-router 10.10.0.1
+ dns-server 8.8.8.8
+
+ip dhcp pool VLAN20
+ network 10.20.0.0 255.255.255.0
+ default-router 10.20.0.1
+ dns-server 8.8.8.8
+
+! OSPF
+router ospf 1
+ router-id 5.5.5.5
+ network 10.51.0.0 0.0.0.255 area 0
+ network 10.52.0.0 0.0.0.255 area 0
+ network 10.55.0.0 0.0.0.255 area 0
+ network 10.77.0.0 0.0.0.255 area 0
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+! Banner
+banner motd ^C
+ACESSO RESTRITO
+Uso autorizado apenas para administração da rede Porto–Gaia.
+^C
+
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh

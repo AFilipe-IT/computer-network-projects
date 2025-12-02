@@ -1,0 +1,49 @@
+! ===== BASIC CONFIG – R5 (Core Porto) =====
+hostname R5
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+! Segurança básica
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! Interfaces L3 (backbone e ligações aos DIST / R7)
+interface Ethernet0/0
+ ip address 10.51.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/1
+ ip address 10.52.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/2
+ ip address 10.55.0.5 255.255.255.0
+ no shutdown
+
+interface Ethernet0/3
+ ip address 10.77.0.5 255.255.255.0
+ no shutdown
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+! Banner
+banner motd ^C
+ACESSO RESTRITO
+Uso autorizado apenas para administração da rede Porto–Gaia.
+^C
+
+! Consola
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+! Acesso remoto
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh

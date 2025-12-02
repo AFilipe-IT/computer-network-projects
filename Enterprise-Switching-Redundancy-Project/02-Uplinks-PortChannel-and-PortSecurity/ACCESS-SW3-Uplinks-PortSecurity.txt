@@ -1,0 +1,33 @@
+! ===== 02 – UPLINKS + PORT-SECURITY – ACCESS-SW3 (Gaia) =====
+
+! Porta de acesso VLAN 75 (PC/host)
+interface Ethernet0/0
+ switchport mode access
+ switchport access vlan 75
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Porta de acesso VLAN 73
+interface Ethernet1/0
+ switchport mode access
+ switchport access vlan 73
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Porta de acesso VLAN 74
+interface Ethernet2/0
+ switchport mode access
+ switchport access vlan 74
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Uplink para o R7 (trunk com VLANs 73–75)
+interface Ethernet3/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 73,74,75
+ switchport nonegotiate
+ no shutdown

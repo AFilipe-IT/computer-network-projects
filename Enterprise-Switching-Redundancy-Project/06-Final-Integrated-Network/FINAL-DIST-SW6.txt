@@ -1,0 +1,65 @@
+! ===== FINAL CONFIG – DIST-SW6 (Distribution Porto) =====
+hostname DIST-SW6
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! Link L3 para R5 (Porto)
+interface Ethernet0/0
+ ip address 10.51.0.6 255.255.255.0
+ no shutdown
+
+! Link físico para os switches de acesso (router-on-a-stick)
+interface Ethernet1/0
+ no ip address
+ no shutdown
+
+! VLAN 10 (Porto) – Gateway + HSRP + DHCP relay
+interface Ethernet1/0.10
+ encapsulation dot1Q 10
+ ip address 10.10.0.2 255.255.255.0
+ ip helper-address 10.51.0.5
+ standby 10 ip 10.10.0.1
+ standby 10 priority 110
+ standby 10 preempt
+ no shutdown
+
+! VLAN 20 (Porto)
+interface Ethernet1/0.20
+ encapsulation dot1Q 20
+ ip address 10.20.0.2 255.255.255.0
+ ip helper-address 10.51.0.5
+ standby 20 ip 10.20.0.1
+ standby 20 priority 110
+ standby 20 preempt
+ no shutdown
+
+! OSPF
+router ospf 1
+ router-id 6.6.6.6
+ network 10.51.0.0 0.0.0.255 area 0
+ network 10.10.0.0 0.0.0.255 area 0
+ network 10.20.0.0 0.0.0.255 area 0
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+banner motd ^C
+ACESSO RESTRITO
+DIST-SW6 – Distribution Porto.
+^C
+
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh

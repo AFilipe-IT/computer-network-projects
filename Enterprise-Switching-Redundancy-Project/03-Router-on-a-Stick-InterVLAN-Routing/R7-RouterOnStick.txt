@@ -1,0 +1,25 @@
+! ===== 03 – ROUTER-ON-A-STICK – R7 (Gaia) =====
+! VLANs 73, 74 e 75 a partir da interface física Ethernet0/0
+
+! Interface física ligada ao ACCESS-SW3
+interface Ethernet0/0
+ no ip address
+ no shutdown
+
+! Subinterface VLAN 73
+interface Ethernet0/0.73
+ encapsulation dot1Q 73
+ ip address 10.73.0.254 255.255.255.0
+ no shutdown
+
+! Subinterface VLAN 74
+interface Ethernet0/0.74
+ encapsulation dot1Q 74
+ ip address 10.74.0.254 255.255.255.0
+ no shutdown
+
+! Subinterface VLAN 75
+interface Ethernet0/0.75
+ encapsulation dot1Q 75
+ ip address 10.75.0.254 255.255.255.0
+ no shutdown

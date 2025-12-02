@@ -1,0 +1,17 @@
+! ===== 05 – OSPF INTERSITE – R7 (Core Gaia) =====
+
+router ospf 1
+ router-id 10.10.10.10
+
+ ! Ligações de backbone para R5
+ network 10.55.0.0 0.0.0.255 area 0
+ network 10.77.0.0 0.0.0.255 area 0
+
+ ! VLAN 73 – Gaia
+ network 10.73.0.0 0.0.0.255 area 0
+
+ ! VLAN 74 – Gaia
+ network 10.74.0.0 0.0.0.255 area 0
+
+ ! VLAN 75 – Gaia
+ network 10.75.0.0 0.0.0.255 area 0

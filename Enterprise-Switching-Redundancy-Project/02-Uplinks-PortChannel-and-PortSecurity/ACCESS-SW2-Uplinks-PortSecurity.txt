@@ -1,0 +1,41 @@
+! ===== 02 – UPLINKS + PORT-SECURITY – ACCESS-SW2 =====
+
+! Porta de acesso para o PC (VLAN 20) com port-security
+interface Ethernet0/0
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! EtherChannel para o ACCESS-SW1 (Port-channel1)
+interface Ethernet0/1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ channel-group 1 mode active
+ no shutdown
+
+interface Ethernet0/2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ channel-group 1 mode active
+ no shutdown
+
+interface Port-channel1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ no shutdown
+
+! Uplink L2 para o Distribution (DIST-SW7)
+interface Ethernet2/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+ switchport nonegotiate
+ no shutdown

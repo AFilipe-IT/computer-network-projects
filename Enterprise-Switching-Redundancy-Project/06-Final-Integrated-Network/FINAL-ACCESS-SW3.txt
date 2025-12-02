@@ -1,0 +1,71 @@
+! ===== FINAL CONFIG – ACCESS-SW3 (Gaia) =====
+hostname ACCESS-SW3
+
+no ip domain-lookup
+ip domain-name porto-gaia.lab
+
+enable secret ENABLE_PASSWORD
+username admin privilege 15 secret ADMIN_PASSWORD
+
+! STP + VLANs Gaia
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+
+vlan 73
+ name VLAN73-Users-Gaia
+vlan 74
+ name VLAN74-Users-Gaia
+vlan 75
+ name VLAN75-Infra-Gaia
+
+! Porta de acesso VLAN 75
+interface Ethernet0/0
+ switchport mode access
+ switchport access vlan 75
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Porta de acesso VLAN 73
+interface Ethernet1/0
+ switchport mode access
+ switchport access vlan 73
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Porta de acesso VLAN 74
+interface Ethernet2/0
+ switchport mode access
+ switchport access vlan 74
+ switchport port-security
+ switchport port-security mac-address sticky
+ no shutdown
+
+! Uplink para R7
+interface Ethernet3/0
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 73,74,75
+ switchport nonegotiate
+ no shutdown
+
+! SSH
+crypto key generate rsa modulus 2048
+ip ssh version 2
+
+banner motd ^C
+ACESSO RESTRITO
+ACCESS-SW3 – Switch de acesso (Gaia).
+^C
+
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ privilege level 15
+
+line vty 0 4
+ logging synchronous
+ exec-timeout 10 0
+ login local
+ transport input ssh
